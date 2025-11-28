@@ -362,6 +362,9 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
   }
 
   void _runOpeningSequence() async {
+    // Speed up for intro (50% faster)
+    _morphController.duration = const Duration(milliseconds: 400);
+
     // Defines the order of shapes for the loading animation
     final sequence = [
       ShapeType.triangle,
@@ -378,7 +381,7 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
         targetShape = shape;
       });
       _morphController.forward(from: 0);
-      await Future.delayed(const Duration(milliseconds: 900));
+      await Future.delayed(const Duration(milliseconds: 450));
     }
 
     if (!mounted) return;
@@ -389,7 +392,11 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
       targetShape = ShapeType.triangle; // Starting selection
       _generateInputControllers(ShapeType.triangle);
     });
-    _morphController.forward(from: 0);
+    await _morphController.forward(from: 0);
+
+    if (!mounted) return;
+    // Reset to normal speed
+    _morphController.duration = const Duration(milliseconds: 800);
   }
 
   void _generateInputControllers(ShapeType type) {
