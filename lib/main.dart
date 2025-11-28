@@ -19,7 +19,7 @@ class AreaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Area Flux',
+      title: 'AreaWiz',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
@@ -362,8 +362,8 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
   }
 
   void _runOpeningSequence() async {
-    // Speed up for intro (50% faster)
-    _morphController.duration = const Duration(milliseconds: 400);
+    // Speed up for intro (adjusted: 500ms)
+    _morphController.duration = const Duration(milliseconds: 500);
 
     // Defines the order of shapes for the loading animation
     final sequence = [
@@ -381,7 +381,7 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
         targetShape = shape;
       });
       _morphController.forward(from: 0);
-      await Future.delayed(const Duration(milliseconds: 450));
+      await Future.delayed(const Duration(milliseconds: 560));
     }
 
     if (!mounted) return;
@@ -482,6 +482,27 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
               },
             ),
           ),
+
+          // Intro Text
+          if (_isLoadingSequence)
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 200.0,
+                ), // Push it down a bit
+                child: Text(
+                  "Initiating Area Wizard...",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 16,
+                    letterSpacing: 2,
+                    fontFamily: 'Courier',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
 
           // 2. The Interaction Area (Bottom Half)
           if (!_isLoadingSequence)
