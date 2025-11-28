@@ -613,33 +613,81 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
 
                     // 3. The Shape Selector (Carousel)
                     SizedBox(
-                      height: 80,
+                      height: 120,
                       child: PageView.builder(
                         controller: _pageController,
                         onPageChanged: _onShapeSelected,
                         itemCount: selectableShapes.length,
                         itemBuilder: (context, index) {
-                          // Simple visual for the selector items
-                          bool isSelected =
-                              (selectableShapes[index] == targetShape);
-                          return Center(
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: isSelected ? 60 : 10,
-                              height: isSelected ? 60 : 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.white24,
-                              ),
-                              child: isSelected
-                                  ? Icon(
-                                      Icons.token,
-                                      color: Colors.black,
-                                      size: 30,
-                                    ) // Placeholder icon
-                                  : null,
+                          final shape = selectableShapes[index];
+                          bool isSelected = (shape == targetShape);
+
+                          // Symbol Mapping
+                          final Map<ShapeType, String> shapeSymbols = {
+                            ShapeType.triangle: "△",
+                            ShapeType.rectangle: "▭",
+                            ShapeType.circle: "○",
+                            ShapeType.trapezoid: "▽",
+                            ShapeType.box: "▢",
+                            ShapeType.cylinder: "◎",
+                            ShapeType.cone: "▲",
+                          };
+
+                          return GestureDetector(
+                            onTap: () {
+                              _pageController.animateToPage(
+                                index,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: isSelected ? 60 : 40,
+                                  height: isSelected ? 60 : 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.white.withValues(alpha: 0.1),
+                                    border: isSelected
+                                        ? null
+                                        : Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                            width: 1,
+                                          ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    shapeSymbols[shape] ?? "?",
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.black
+                                          : Colors.white54,
+                                      fontSize: isSelected ? 30 : 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity: isSelected ? 1.0 : 0.5,
+                                  child: Text(
+                                    shapeConfigs[shape]?.name ?? "",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },
