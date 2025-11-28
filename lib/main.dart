@@ -153,6 +153,50 @@ class PointGenerator {
         }
         break;
 
+      case ShapeType.trapezoid:
+        // Trapezoid: narrow top, wide bottom
+        int side = particleCount ~/ 4;
+        // Top edge (center, narrow: 0.35 to 0.65)
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.35 + (i / side) * 0.3, 0.3));
+        }
+        // Right slope (angled outward)
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.65 + (i / side) * 0.15, 0.3 + (i / side) * 0.5));
+        }
+        // Bottom edge (wide: 0.8 to 0.2)
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.8 - (i / side) * 0.6, 0.8));
+        }
+        // Left slope (angled outward)
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.2 + (i / side) * 0.15, 0.8 - (i / side) * 0.5));
+        }
+        break;
+
+      case ShapeType.cone:
+        // Cone: triangle profile with curved bottom (3D cone projection)
+        int side = particleCount ~/ 3;
+        // Right slope from apex to base
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.5 + (i / side) * 0.3, 0.2 + (i / side) * 0.6));
+        }
+        // Curved bottom edge (elliptical arc)
+        for (int i = 0; i < side; i++) {
+          double theta = (i / side) * math.pi; // Half circle
+          points.add(
+            Offset(
+              0.8 - 0.6 * (1 - math.cos(theta)) / 2,
+              0.8 + 0.05 * math.sin(theta), // Slight curve downward
+            ),
+          );
+        }
+        // Left slope from base to apex
+        for (int i = 0; i < side; i++) {
+          points.add(Offset(0.2 + (i / side) * 0.3, 0.8 - (i / side) * 0.6));
+        }
+        break;
+
       case ShapeType.cylinder:
         // Top Ellipse, Bottom Ellipse, Sides
         int circlePts = 40;
@@ -230,12 +274,6 @@ class PointGenerator {
           points.add(Offset(0.25 + i / conPts * ox, 0.75 + i / conPts * oy));
         }
         break;
-
-      default:
-        // Default to chaos
-        for (int i = 0; i < particleCount; i++) {
-          points.add(Offset(0.5, 0.5));
-        }
     }
 
     // Fill remaining if math was slightly off
@@ -270,6 +308,9 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
   late AnimationController _morphController;
   late Animation<double> _morphAnimation;
 
+  // Animation Controller for continuous floating
+  late AnimationController _floatController;
+
   // Page Controller for bottom selector
   late PageController _pageController;
 
@@ -293,10 +334,31 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
       curve: Curves.easeInOutCubicEmphasized,
     );
 
+    // Continuous floating animation
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
     _pageController = PageController(viewportFraction: 0.25, initialPage: 0);
 
     // Start the splash sequence
     _runOpeningSequence();
+  }
+
+  @override
+  void dispose() {
+    // Clean up animation controllers
+    _morphController.dispose();
+    _floatController.dispose();
+    _pageController.dispose();
+
+    // Clean up input controllers
+    for (var controller in _inputControllers) {
+      controller.dispose();
+    }
+
+    super.dispose();
   }
 
   void _runOpeningSequence() async {
@@ -399,13 +461,14 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
           Positioned.fill(
             bottom: MediaQuery.of(context).size.height * 0.4,
             child: AnimatedBuilder(
-              animation: _morphAnimation,
+              animation: Listenable.merge([_morphAnimation, _floatController]),
               builder: (context, child) {
                 return CustomPaint(
                   painter: ParticlePainter(
                     startType: currentShape,
                     endType: targetShape,
                     progress: _morphAnimation.value,
+                    floatProgress: _floatController.value,
                     color: Colors.white,
                   ),
                 );
@@ -601,12 +664,14 @@ class ParticlePainter extends CustomPainter {
   final ShapeType startType;
   final ShapeType endType;
   final double progress;
+  final double floatProgress;
   final Color color;
 
   ParticlePainter({
     required this.startType,
     required this.endType,
     required this.progress,
+    required this.floatProgress,
     required this.color,
   });
 
@@ -635,15 +700,12 @@ class ParticlePainter extends CustomPainter {
       double curX = start.dx + (end.dx - start.dx) * progress;
       double curY = start.dy + (end.dy - start.dy) * progress;
 
-      // Add slight noise for "Floating" effect if progress is static (0 or 1)
-      if (progress == 0 || progress == 1) {
-        // Just a tiny vibration to make it look alive
-        double time = DateTime.now().millisecondsSinceEpoch / 1000;
-        double noiseX = 0.005 * math.sin(time + i);
-        double noiseY = 0.005 * math.cos(time + i * 0.5);
-        curX += noiseX;
-        curY += noiseY;
-      }
+      // Continuous floating animation using controller value
+      double time = floatProgress * 2 * math.pi; // 0 to 2π cycle
+      double noiseX = 0.008 * math.sin(time + i * 0.1);
+      double noiseY = 0.008 * math.cos(time + i * 0.15);
+      curX += noiseX;
+      curY += noiseY;
 
       // Convert to Screen Coordinates
       double screenX = offsetX + curX * scale;
