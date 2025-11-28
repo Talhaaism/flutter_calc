@@ -481,7 +481,7 @@ class _ShapeMorphScreenState extends State<ShapeMorphScreen>
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.45,
+                height: MediaQuery.of(context).size.height * 0.55,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
